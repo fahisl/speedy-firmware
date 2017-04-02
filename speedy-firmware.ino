@@ -55,6 +55,11 @@ void setup() {
 
 void loop() {
   String command = Serial.readStringUntil(';');
+
+  if (command == "ident" || command == "id") {
+    printBoardId();
+    return;
+  }
   
   if (command == "feeder.feed") {
     feedNow();
@@ -70,11 +75,6 @@ void loop() {
 
   if (command == "feeder.status") {
     printFeederStatus();
-    return;
-  }
-
-  if (command == "ident" || command == "id") {
-    printBoardId();
     return;
   }
 
@@ -144,11 +144,11 @@ void feederReset() {
 }
 
 int digitalReadOutputPin(uint8_t pin) {
- uint8_t bit = digitalPinToBitMask(pin);
- uint8_t port = digitalPinToPort(pin);
- if (port == NOT_A_PIN) 
-   return LOW;
-
- return (*portOutputRegister(port) & bit) ? HIGH : LOW;
+  uint8_t bit = digitalPinToBitMask(pin);
+  uint8_t port = digitalPinToPort(pin);
+  
+  if (port == NOT_A_PIN) return LOW;
+  
+  return (*portOutputRegister(port) & bit) ? HIGH : LOW;
 }
 
