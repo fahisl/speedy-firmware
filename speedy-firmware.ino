@@ -21,7 +21,7 @@ const int uvGround = 18;
 const int uvPower = 19;
 
 // Lighting Relays
-const int lightingPin = 4;
+const int lightingPin = 7;
 const int lightingLastState = 1;
 
 // Board statuses
@@ -84,15 +84,15 @@ void loop() {
   }
 
   if (command == "lights.off") {
-    digitalWrite(lightingPin, LOW);
-    EEPROM.write(lightingLastState, 0);
+    digitalWrite(lightingPin, HIGH);
+    EEPROM.write(lightingLastState, 1);
     printLightingStatus();
     return;
   }
 
   if (command == "lights.on") {
-    digitalWrite(lightingPin, HIGH);
-    EEPROM.write(lightingLastState, 1);
+    digitalWrite(lightingPin, LOW);
+    EEPROM.write(lightingLastState, 0);
     printLightingStatus();
     return;
   }
@@ -107,7 +107,7 @@ void printFeederStatus() {
 void printLightingStatus() {
   int chk = DHT.read11(dhtPin);
   
-  lightingStatus["power"] = digitalReadOutputPin(lightingPin);
+  lightingStatus["power"] = !digitalReadOutputPin(lightingPin);
   lightingStatus["uv"] = analogRead(uvPin);
   lightingStatus["temperature"] = DHT.temperature;
   lightingStatus["humidity"] = DHT.humidity;
