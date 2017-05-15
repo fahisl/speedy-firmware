@@ -6,9 +6,9 @@
 // Feeder Servo
 Servo feeder;
 const int feederPin = 14;
-const int feederIncrement = 36;
-const int feederLastPosition = 0;
-int feederPosition = 0;
+const int feederForward = 0;
+const int feederStop = 6;
+const int feedingTime = 2000;
 
 // Temperature & humidity sensor
 dht DHT;
@@ -34,9 +34,6 @@ JsonObject& feederStatus = jsonBuffer.createObject();
 
 
 void setup() {
-  feederPosition = EEPROM.read(feederLastPosition);
-  setFeederPosition();
-
   pinMode(dhtPower, OUTPUT);
   digitalWrite(dhtPower, HIGH);
 
@@ -62,19 +59,20 @@ void loop() {
   }
   
   if (command == "feeder.feed") {
-    feedNow();
-    printFeederStatus();
+    feed();
+    Serial.println("{\"action\":\"feed\", \"status\":\"done\"}");
     return;
   }
 
-  if (command == "feeder.reset") {
-    feederReset();
-    printFeederStatus();
+  if (command == "feeder.on") {
+    feeder.attach(feederPin);
+    feeder.write(feederForward);
     return;
   }
 
-  if (command == "feeder.status") {
-    printFeederStatus();
+  if (command == "feeder.off") {
+    feeder.write(feederStop);
+    feeder.detach();
     return;
   }
 
@@ -98,12 +96,6 @@ void loop() {
   }
 }
 
-void printFeederStatus() {
-  feederStatus["remaining_feeds"] = (180 - feederPosition) / feederIncrement;
-  feederStatus["position"] = feederPosition;
-  feederStatus.prettyPrintTo(Serial);
-}
-
 void printLightingStatus() {
   int chk = DHT.read11(dhtPin);
   
@@ -119,28 +111,18 @@ void printBoardId() {
   jsonId.prettyPrintTo(Serial);
 }
 
-void feedNow() {
-  feederPosition += feederIncrement;
-  if (feederPosition > 180) {
-    feederPosition = 180;
-    return;
-  }
-  setFeederPosition();
-}
-
-void setFeederPosition() {
-  if (feederPosition > 180) return;
-
+void feed() {
   feeder.attach(feederPin);
-  feeder.write(feederPosition);
-  delay(1000);
+  feeder.write(feederForward);
+  delay(feedingTime);
+  feeder.write(feederStop);
   feeder.detach();
-  EEPROM.write(feederLastPosition, feederPosition);
 }
 
-void feederReset() {
-  feederPosition = 0;
-  setFeederPosition();
+void runFeeder(int rotation, int duration) {
+  feeder.write(rotation);
+  delay(duration);
+  feeder.write(feederStop);
 }
 
 int digitalReadOutputPin(uint8_t pin) {
